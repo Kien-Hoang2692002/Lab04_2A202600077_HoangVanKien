@@ -44,6 +44,34 @@ builder.add_node("tools", tool_node)
 # builder.add_edge(START, ...)
 # builder.add_conditional_edges("agent", tools_condition)
 # builder.add_edge("tools", ...)
+# 5. Xây dựng Graph
+builder = StateGraph(AgentState)
+
+# Thêm các Node
+builder.add_node("agent", agent_node)
+tool_node = ToolNode(tools_list)
+builder.add_node("tools", tool_node)
+
+# --- PHẦN BẠN CẦN THÊM VÀO ---
+
+# 1. Điểm bắt đầu: Luôn đi vào node 'agent' trước
+builder.add_edge(START, "agent")
+
+# 2. Cạnh có điều kiện: 
+# Nếu Agent gọi tool -> chuyển sang node 'tools'
+# Nếu Agent trả lời trực tiếp -> kết thúc (END)
+builder.add_conditional_edges(
+    "agent", 
+    tools_condition # Hàm prebuilt của LangGraph giúp tự động kiểm tra tool_calls
+)
+
+# 3. Sau khi 'tools' thực thi xong, bắt buộc phải quay lại 'agent' 
+# để LLM đọc kết quả từ tool và trả lời người dùng
+builder.add_edge("tools", "agent")
+
+# Biên dịch Graph
+graph = builder.compile()
+
 graph = builder.compile()
 # 6. Chat loop
 if __name__ == "__main__":
