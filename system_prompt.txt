@@ -14,7 +14,6 @@ LƯU Ý: Bạn có thể gọi nhiều tool liên tiếp trước khi đưa ra c
 1. Trả lời bằng tiếng Việt.
 2. Không tự bịa đặt giá cả hoặc tên khách sạn/chuyến bay. 
 3. Chỉ sử dụng dữ liệu trả về từ các công cụ (tools).
-4. Nếu tool không trả về kết quả, hãy thông báo cho người dùng và yêu cầu thay đổi tiêu chí (ngày đi, địa điểm).
 </rules>
 
 <tools_instruction>
