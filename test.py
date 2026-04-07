@@ -1,60 +1,84 @@
-from tools import search_flights, search_hotels, calculate_budget
+import datetime
+from agentv2 import graph
 
-def run_tests():
-    print("=== BẮT ĐẦU KIỂM THỬ HỆ THỐNG TRAVEL TOOLS ===\n")
+def run_agent_test_suite():
+    print("="*60)
+    print("HỆ THỐNG KIỂM THỬ TỰ ĐỘNG - TRAVEL AGENT AI")
+    print("="*60)
 
-    # ---------------------------------------------------------
-    # TEST CASE 1: Tìm chuyến bay (Cả chiều xuôi và chiều ngược)
-    # ---------------------------------------------------------
-    print("--- Test Case 1: Tìm chuyến bay ---")
-    # Chiều xuôi có trong DB
-    print("1.1 Hà Nội -> Đà Nẵng:")
-    print(search_flights.run({"origin": "Hà Nội", "destination": "Đà Nẵng"}))
+    test_scenarios = [
+        {
+            "id": "Test 1",
+            "name": "Direct Answer (Không dùng tool)",
+            "user_input": "Xin chào! Tôi đang muốn đi du lịch nhưng chưa biết đi đâu.",
+            "expectation": "Agent chào hỏi thân thiện, đặt câu hỏi gợi mở về sở thích, ngân sách hoặc thời gian."
+        },
+        {
+            "id": "Test 2",
+            "name": "Single Tool Call (Tìm chuyến bay)",
+            "user_input": "Tìm giúp tôi chuyến bay từ Hà Nội đi Đà Nẵng",
+            "expectation": "Agent gọi tool search_flights, liệt kê danh sách chuyến bay (thường là 4 chuyến)."
+        },
+        {
+            "id": "Test 3",
+            "name": "Multi-Step Tool Chaining (Tư vấn trọn gói)",
+            "user_input": "Tôi ở Hà Nội, muốn đi Phú Quốc 2 đêm, budget 5 triệu. Tư vấn giúp!",
+            "expectation": "Agent gọi liên tiếp: search_flights -> search_hotels -> calculate_budget. Kết quả có bảng tổng hợp chi phí."
+        },
+        {
+            "id": "Test 4",
+            "name": "Missing Info (Hỏi lại thông tin thiếu)",
+            "user_input": "Tôi muốn đặt khách sạn",
+            "expectation": "Agent không gọi tool ngay, yêu cầu người dùng cung cấp: Thành phố, số đêm, hoặc ngân sách."
+        },
+        {
+            "id": "Test 5",
+            "name": "Guardrail (Từ chối việc ngoài phạm vi)",
+            "user_input": "Giải giúp tôi bài tập lập trình Python về linked list",
+            "expectation": "Agent từ chối lịch sự, khẳng định chỉ hỗ trợ các tác vụ liên quan đến du lịch."
+        }
+    ]
+
+    #Chạy test terminal
+    # for test in test_scenarios:
+    #     print(f"\n🚀 {test['id']}: {test['name']}")
+        
+    #     # THỰC THI AGENT
+    #     result = graph.invoke({"messages": [("human", test['user_input'])]})
+    #     response = result["messages"][-1].content
+        
+    #     print(f"Agent Response:\n{response}")
+    #     print(f"--- [KẾT THÚC {test['id']}] ---")
+
+    # Mở file để ghi kết quả
+    with open("test_results.md", "w", encoding="utf-8") as f:
+        # Ghi tiêu đề file Markdown
+        f.write("# BÁO CÁO KẾT QUẢ KIỂM THỬ AGENT LANGGRAPH\n")
+        f.write("**Họ tên: Hoàng Văn Kiên**\n")
+        f.write("**MSSV: 2A202600077**\n")
+        f.write(f"**Ngày thực hiện:** {datetime.datetime.now().strftime('%d/%m/%Y %H:%M:%S')}\n\n")
+        f.write("| STT | Kịch bản | Input | Kết quả Agent | Đánh giá |\n")
+        f.write("|:---:|:---|:---|:---|:---:|\n")
+
+        print("--- Đang bắt đầu quá trình kiểm thử tự động ---")
+
+        for test in test_scenarios:
+            print(f"Đang chạy {test['id']}...")
     
-    # Chiều ngược (Không có trong DB, tool phải báo tìm thấy chiều xuôi)
-    print("\n1.2 Đà Nẵng -> Hà Nội (Tra ngược):")
-    print(search_flights.run({"origin": "Đà Nẵng", "destination": "Hà Nội"}))
-    print("-" * 50)
+            # Gọi Agent thực tế
+            result = graph.invoke({"messages": [("human", test['user_input'])]})
+            
+            # Lấy câu trả lời cuối cùng
+            agent_response = result["messages"][-1].content
+            # Xử lý xuống dòng để không làm hỏng bảng Markdown
+            formatted_response = agent_response.replace("\n", "<br>").replace("|", "\|")
 
-    # ---------------------------------------------------------
-    # TEST CASE 2: Tìm khách sạn (Lọc giá + Sắp xếp Rating)
-    # ---------------------------------------------------------
-    print("\n--- Test Case 2: Tìm khách sạn tại Phú Quốc ---")
-    # Tìm khách sạn giá rẻ dưới 1.000.000đ
-    print("2.1 Phú Quốc, ngân sách dưới 1.000.000đ:")
-    print(search_hotels.run({"city": "Phú Quốc", "max_price_per_night": 1000000}))
-    
-    # Tìm khách sạn khi ngân sách quá thấp
-    print("\n2.2 Hồ Chí Minh, ngân sách cực thấp (50.000đ):")
-    print(search_hotels.run({"city": "Hồ Chí Minh", "max_price_per_night": 50000}))
-    print("-" * 50)
+            # Ghi vào file theo định dạng bảng
+            f.write(f"| {test['id']} | {test['name']} | *\"{test['user_input']}\"* | {formatted_response} | [ ] Pass/Fail |\n")
 
-    # ---------------------------------------------------------
-    # TEST CASE 3: Tính toán ngân sách (Parsing + Math)
-    # ---------------------------------------------------------
-    print("\n--- Test Case 3: Tính toán ngân sách ---")
-    total = 5000000
-    expenses = "vé_máy_bay:1450000,khách_sạn:1800000,ăn_uống:500000"
-    
-    print(f"3.1 Tính toán với ngân sách {total}đ và các khoản chi:")
-    print(calculate_budget.run({"total_budget": total, "expenses": expenses}))
+        f.write("\n\n---\n*Ghi chú: Sinh viên tự đánh giá Pass/Fail dựa trên kết quả thực tế và kỳ vọng.*")
 
-    # Test trường hợp vượt ngân sách
-    print("\n3.2 Test vượt ngân sách:")
-    print(calculate_budget.run({
-        "total_budget": 2000000, 
-        "expenses": "vé_máy_bay:2800000"
-    }))
-    print("-" * 50)
-
-    # ---------------------------------------------------------
-    # TEST CASE 4: Lỗi định dạng đầu vào
-    # ---------------------------------------------------------
-    print("\n--- Test Case 4: Xử lý lỗi định dạng ---")
-    print(calculate_budget.run({
-        "total_budget": 1000000, 
-        "expenses": "sai_định_dạng_không_có_dấu_hai_chấm"
-    }))
+    print("\n✅ Hoàn thành! Tất cả kết quả đã được lưu vào file: test_results.md")
 
 if __name__ == "__main__":
-    run_tests()
+    run_agent_test_suite()

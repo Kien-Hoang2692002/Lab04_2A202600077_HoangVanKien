@@ -34,33 +34,25 @@ def agent_node(state: AgentState):
         print(f"Trả lời trực tiếp")
         
     return {"messages": [response]}
+
+
 # 5. Xây dựng Graph
-builder = StateGraph(AgentState)
+def get_agent_graph():
+    builder = StateGraph(AgentState)
+    builder.add_node("agent", agent_node)
+    
+    tool_node = ToolNode(tools_list)
+    builder.add_node("tools", tool_node)
 
-# Thêm các Node
-builder.add_node("agent", agent_node)
-tool_node = ToolNode(tools_list)
-builder.add_node("tools", tool_node)
+    # Khai báo luồng đi (Edges)
+    builder.add_edge(START, "agent")
+    builder.add_conditional_edges("agent", tools_condition)
+    builder.add_edge("tools", "agent")
 
-# --- PHẦN BẠN CẦN THÊM VÀO ---
-
-# 1. Điểm bắt đầu: Luôn đi vào node 'agent' trước
-builder.add_edge(START, "agent")
-
-# 2. Cạnh có điều kiện: 
-# Nếu Agent gọi tool -> chuyển sang node 'tools'
-# Nếu Agent trả lời trực tiếp -> kết thúc (END)
-builder.add_conditional_edges(
-    "agent", 
-    tools_condition # Hàm prebuilt của LangGraph giúp tự động kiểm tra tool_calls
-)
-
-# 3. Sau khi 'tools' thực thi xong, bắt buộc phải quay lại 'agent' 
-# để LLM đọc kết quả từ tool và trả lời người dùng
-builder.add_edge("tools", "agent")
+    return builder.compile()
 
 # Biên dịch Graph
-graph = builder.compile()
+graph = get_agent_graph()
 # 6. Chat loop
 if __name__ == "__main__":
     print("=" * 60)
@@ -75,3 +67,4 @@ if __name__ == "__main__":
         result = graph.invoke({"messages": [("human", user_input)]})
         final = result["messages"][-1]
         print(f"\nTravelBuddy: {final.content}")
+        
